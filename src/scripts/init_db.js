@@ -63,6 +63,24 @@ CREATE TABLE IF NOT EXISTS payments (
     FOREIGN KEY (student_id) REFERENCES students(id),
     FOREIGN KEY (recorded_by) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    user_name TEXT NOT NULL,
+    user_role TEXT,
+    action TEXT NOT NULL,
+    entity_type TEXT,
+    entity_id INTEGER,
+    entity_name TEXT,
+    details TEXT,
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
 `;
 
 console.log('Initializing database...');

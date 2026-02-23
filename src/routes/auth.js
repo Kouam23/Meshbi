@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../database');
 const bcrypt = require('bcrypt');
+const { logAction } = require('../utils/audit');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,18 @@ router.post('/login', (req, res) => {
                     secondary_role: user.secondary_role || null,
                 };
 
+                // Log successful login
+                logAction({
+                    userId: user.id,
+                    userName: user.name,
+                    userRole: user.role,
+                    action: 'LOGIN',
+                    entityType: 'user',
+                    entityId: user.id,
+                    entityName: user.name,
+                    ipAddress: req.auditLog.ipAddress
+                });
+
                 // Redirect to primary role dashboard
                 if (user.role === 'admin') return res.redirect('/admin');
                 if (user.role === 'secretary') return res.redirect('/secretary');
@@ -78,11 +91,46 @@ router.post('/login', (req, res) => {
             }
         }
 
+        // Log failed login attempt
+        logAction({
+            userId: null,
+            userName: email,
+            userRole: 'unknown',
+            action: 'LOGIN_FAILED',
+            entityType: 'user',
+            details: 'Invalid credentials',
+            ipAddress: req.auditLog.ipAddress
+        });
+
         res.render('login', { title: 'Login', error: 'Invalid credentials' });
     });
 });
 
+router.post('/refresh-session', (req, res) => {
+    if (req.session.user) {
+        // Update last activity time to extend session
+        req.session.lastActivity = Date.now();
+        return res.json({ success: true });
+    }
+    res.status(401).json({ error: 'Not authenticated' });
+});
+
 router.get('/logout', (req, res) => {
+    const user = req.session.user;
+    
+    // Log logout action
+    if (user) {
+        logAction({
+            userId: user.id,
+            userName: user.name,
+            userRole: user.role,
+            action: 'LOGOUT',
+            entityType: 'user',
+            entityId: user.id,
+            ipAddress: req.auditLog.ipAddress
+        });
+    }
+    
     req.session.destroy();
     res.redirect('/login');
 });

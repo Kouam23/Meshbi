@@ -207,17 +207,134 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
             .login-split {
                 flex-direction: column;
             }
 
             .login-visual {
-                display: none;
+                flex: 0 0 auto;
+                min-height: 280px;
+                padding: 2rem 1.5rem;
+                justify-content: flex-start;
+                padding-top: 3rem;
+            }
+
+            .visual-content {
+                max-width: 100%;
+            }
+
+            .visual-circle {
+                width: 150px !important;
+                height: 150px !important;
+            }
+
+            .visual-circle:first-of-type {
+                top: -40px !important;
+                left: -40px !important;
+            }
+
+            .visual-circle:last-of-type {
+                bottom: 20px !important;
+                right: 20px !important;
+                width: 120px !important;
+                height: 120px !important;
+            }
+
+            h1.brand {
+                font-size: 1.75rem;
+            }
+
+            p.subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+
+            .year-badge {
+                margin-top: 1rem;
+                padding: 0.6rem 1.2rem;
+                font-size: 0.85rem;
+            }
+
+            .login-form-container {
+                flex: 1;
+                padding: 1.5rem;
+            }
+
+            .login-card {
+                padding: 1.5rem;
+            }
+
+            .form-title {
+                font-size: 1.5rem;
             }
 
             .lang-bar {
                 top: 0.75rem;
                 right: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-visual {
+                min-height: 240px;
+                padding: 2rem 1rem;
+            }
+
+            h1.brand {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            p.subtitle {
+                font-size: 0.85rem;
+            }
+
+            .login-form-container {
+                padding: 1rem;
+            }
+
+            .login-card {
+                padding: 1rem;
+            }
+
+            .form-title {
+                font-size: 1.3rem;
+            }
+
+            .form-subtitle {
+                font-size: 0.85rem;
+            }
+
+            input {
+                padding: 0.75rem;
+                font-size: 0.95rem;
+            }
+
+            button {
+                padding: 0.75rem;
+                font-size: 0.95rem;
+            }
+
+            label {
+                font-size: 0.85rem;
+            }
+
+            .year-badge {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .lang-bar {
+                gap: 0.3rem;
+            }
+
+            .lang-btn {
+                padding: 0.3rem 0.7rem;
+                font-size: 0.75rem;
             }
         }
     </style>
@@ -263,6 +380,12 @@
                     <div class="alert-error">⚠️ <%= t.login_error %>
                     </div>
                     <% } %>
+
+                <% if (query.timeout === 'true') { %>
+                    <div class="alert-error" style="background:#fef3c7;color:#b45309;border-color:#fcd34d;">
+                        ⏰ Your session has expired due to inactivity. Please login again.
+                    </div>
+                <% } %>
 
                         <form action="/auth/login" method="POST" autocomplete="off">
                             <div class="input-group">

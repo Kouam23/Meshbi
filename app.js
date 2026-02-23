@@ -10,6 +10,8 @@ const paymentsRouter = require('./src/routes/payments');
 const reportsRouter = require('./src/routes/reports');
 const i18n = require('./src/middleware/i18n');
 const usersRouter = require('./src/routes/users');
+const auditRouter = require('./src/routes/audit');
+const { auditMiddleware } = require('./src/utils/audit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,14 +21,49 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session setup
+// Session setup with inactivity timeout (30 minutes)
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const WARNING_TIME = 25 * 60 * 1000;   // Show warning at 25 minutes
+
 app.use(session({
     store: new SQLiteStore({ db: 'sessions.db', dir: './' }),
     secret: 'meshbi_secret_key_change_me_2026',
     resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 }
+    cookie: { 
+        maxAge: SESSION_TIMEOUT,
+        httpOnly: true,
+        secure: false // Set to true if using HTTPS
+    }
 }));
+
+// Audit logging middleware
+app.use(auditMiddleware);
+
+// Session timeout middleware
+app.use((req, res, next) => {
+    if (req.session.user) {
+        const now = Date.now();
+        const lastActivity = req.session.lastActivity || now;
+        const timeSinceLastActivity = now - lastActivity;
+
+        // If inactivity exceeds timeout, destroy session
+        if (timeSinceLastActivity > SESSION_TIMEOUT) {
+            req.session.destroy();
+            return res.redirect('/login?timeout=true');
+        }
+
+        // Update last activity time
+        req.session.lastActivity = now;
+
+        // Check if warning should be shown
+        if (timeSinceLastActivity > WARNING_TIME) {
+            res.locals.showSessionWarning = true;
+            res.locals.sessionTimeoutMs = SESSION_TIMEOUT - timeSinceLastActivity;
+        }
+    }
+    next();
+});
 
 // i18n – must be after session
 app.use(i18n);
@@ -53,6 +90,7 @@ app.use('/teacher', teacherRouter);
 app.use('/payments', paymentsRouter);
 app.use('/reports', reportsRouter);
 app.use('/users', usersRouter);
+app.use('/audit', auditRouter);
 
 // Root
 app.get('/', (req, res) => {
@@ -66,7 +104,7 @@ app.get('/', (req, res) => {
 
 app.get('/login', (req, res) => {
     if (req.session.user) return res.redirect('/');
-    res.render('login', { title: 'Login', error: null });
+    res.render('login', { title: 'Login', error: null, query: req.query });
 });
 
 // Role dashboards

@@ -1,0 +1,113 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.student_add_title %>
+            </h2>
+            <a href="/students" class="btn-secondary">
+                <%= t.back %>
+            </a>
+        </div>
+
+        <div class="glass-card form-container" style="max-width:720px; margin:0 auto;">
+            <form action="/students/add" method="POST">
+                <h4 style="margin-bottom:1.5rem;color:var(--primary-color);">
+                    <%= t.student_personal_info %>
+                </h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_name %> *
+                        </label>
+                        <input type="text" name="name" required placeholder="ex. Jean Paul Kamga">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_level %> *
+                        </label>
+                        <select name="level" required>
+                            <option value="">
+                                <%= t.student_level_select %>
+                            </option>
+                            <% ['Form 1','Form 2','Form 3','Form 4','Form 5','Lower Sixth','Upper Sixth'].forEach(l=> {
+                                %>
+                                <option value="<%= l %>">
+                                    <%= l %>
+                                </option>
+                                <% }) %>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_gender %>
+                        </label>
+                        <select name="gender">
+                            <option value="">
+                                <%= t.student_gender_select %>
+                            </option>
+                            <option value="Male">
+                                <%= t.student_male %>
+                            </option>
+                            <option value="Female">
+                                <%= t.student_female %>
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_phone %>
+                        </label>
+                        <input type="text" name="phone" placeholder="+237 6XX XXX XXX">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_dob %>
+                        </label>
+                        <input type="date" name="dob">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_pob %>
+                        </label>
+                        <input type="text" name="pob" placeholder="ex. Yaoundé">
+                    </div>
+                </div>
+                
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>
+                        <%= t.student_address %>
+                    </label>
+                    <input type="text" name="address" placeholder="ex. Rue X, Quartier Y, Douala">
+                </div>
+
+                <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border-color)">
+                <h4 style="margin-bottom:1.5rem;color:var(--primary-color);">
+                    <%= t.student_parent_info %>
+                </h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_parent_name %>
+                        </label>
+                        <input type="text" name="parent_name" placeholder="ex. Paul Kamga">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <%= t.student_parent_phone %>
+                        </label>
+                        <input type="text" name="parent_phone" placeholder="+237 6XX XXX XXX">
+                    </div>
+                </div>
+
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;">
+                    <%= t.student_matricule_hint %>
+                </p>
+                <button type="submit" class="btn-primary" style="width:100%;margin-top:1rem;">
+                    <%= t.student_register_btn %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

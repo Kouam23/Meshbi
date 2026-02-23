@@ -1,0 +1,27 @@
+﻿# Node and environment artifacts
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.env
+.env.*
+coverage/
+.nyc_output/
+.DS_Store
+Thumbs.db
+logs/
+*.log
+.vscode/
+.idea/
+dist/
+build/
+tmp/
+.cache/
+.parcel-cache/
+.next/
+out/
+.vercel/
+.husky/_/
+.eslintcache
+sessions.db
+school.db

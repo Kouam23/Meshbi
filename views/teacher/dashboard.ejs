@@ -1,0 +1,73 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.teacher_dash_title %>
+            </h2>
+        </div>
+
+        <div class="dashboard-grid">
+            <% if (subjects.length===0) { %>
+                <div class="glass-card">
+                    <p style="color:var(--text-muted)">
+                        <%= lang==='fr' ? 'Aucune matière assignée pour le moment.'
+                            : 'You have not been assigned any subjects yet.' %>
+                    </p>
+                </div>
+                <% } %>
+                    <% subjects.forEach(subject=> { %>
+                        <div class="glass-card dash-card">
+                            <h3>📖 <%= subject.name %>
+                            </h3>
+                            <p>
+                                <strong>
+                                    <%= t.student_level %>:
+                                </strong>
+                                <%= subject.level %><br>
+                                    <strong>
+                                        <%= t.subjects_col_code %>:
+                                    </strong>
+                                    <%= subject.code || t.na %>
+                            </p>
+                            <a href="/teacher/subject/<%= subject.id %>" class="btn-primary">
+                                <%= t.teacher_dash_enter_grades %>
+                            </a>
+                        </div>
+                        <% }) %>
+        </div>
+    </div>
+
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .dash-card {
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .dash-card:hover {
+            border-top-color: var(--primary-color);
+        }
+
+        .dash-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .dash-card p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            flex-grow: 1;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+    </style>
+
+    <%- include('../partials/footer') %>

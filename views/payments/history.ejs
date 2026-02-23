@@ -1,0 +1,57 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <div>
+                <h2>Payment History</h2>
+                <p>
+                    <%= student.name %> - <%= student.matricule %>
+                </p>
+            </div>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <a href="/payments/add?student_id=<%= student.id %>" class="btn-primary">Add New Payment</a>
+                <a href="/students" class="btn-secondary">Back to List</a>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding:0;overflow:hidden;">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Comments</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (payments.length===0) { %>
+                            <tr>
+                                <td colspan="4" style="text-align: center;">No payments recorded.</td>
+                            </tr>
+                            <% } %>
+
+                                <% payments.forEach(payment=> { %>
+                                    <tr>
+                                        <td>
+                                            <%= new Date(payment.payment_date).toLocaleDateString() %>
+                                        </td>
+                                        <td><span class="badge badge-primary">
+                                                <%= payment.payment_type %>
+                                            </span></td>
+                                        <td><strong>
+                                                <%= payment.amount.toLocaleString() %> FCFA
+                                            </strong></td>
+                                        <td style="color:var(--text-muted)">
+                                            <%= payment.comments || '-' %>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

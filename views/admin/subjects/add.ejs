@@ -1,0 +1,70 @@
+<%- include('../../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.subjects_add_title %>
+            </h2>
+            <a href="/subjects" class="btn-secondary">
+                <%= t.back %>
+            </a>
+        </div>
+
+        <div class="glass-card form-container" style="max-width:600px; margin:0 auto;">
+            <form action="/subjects/add" method="POST">
+                <div class="form-group">
+                    <label>
+                        <%= t.subject_name %> *
+                    </label>
+                    <input type="text" name="name" required placeholder="ex. Mathematics">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <%= t.subject_code %>
+                    </label>
+                    <input type="text" name="code" placeholder="ex. MATH">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <%= t.subject_coeff %>
+                    </label>
+                    <input type="number" name="coefficient" value="1" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <%= t.subject_level %> *
+                    </label>
+                    <select name="level" required>
+                        <option value="">
+                            <%= t.student_level_select %>
+                        </option>
+                        <% ['Form 1','Form 2','Form 3','Form 4','Form 5','Lower Sixth','Upper Sixth'].forEach(l=> { %>
+                            <option value="<%= l %>">
+                                <%= l %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <%= t.subject_teacher %>
+                    </label>
+                    <select name="teacher_id">
+                        <option value="">
+                            <%= t.subject_no_teacher %>
+                        </option>
+                        <% teachers.forEach(teacher=> { %>
+                            <option value="<%= teacher.id %>">
+                                <%= teacher.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%;">
+                    <%= t.subjects_add %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../../partials/footer') %>

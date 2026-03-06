@@ -1,7 +1,8 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
-const SQLiteStore = require('connect-sqlite3')(session);
+const pgSession = require('connect-pg-simple')(session);
+const pool = require('./src/database');
 const { router: authRouter } = require('./src/routes/auth');
 const studentsRouter = require('./src/routes/students');
 const subjectsRouter = require('./src/routes/subjects');
@@ -26,7 +27,10 @@ const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const WARNING_TIME = 25 * 60 * 1000;   // Show warning at 25 minutes
 
 app.use(session({
-    store: new SQLiteStore({ db: 'sessions.db', dir: './' }),
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session'
+    }),
     secret: 'meshbi_secret_key_change_me_2026',
     resave: false,
     saveUninitialized: false,

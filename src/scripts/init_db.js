@@ -1,97 +1,126 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.join(__dirname, '../../school.db');
-const db = new sqlite3.Database(dbPath);
+// PostgreSQL connection pool
+const pool = new Pool({
+    user: process.env.DB_USER || 'meshbi',
+    password: process.env.DB_PASSWORD || 'meshbi_password',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'meshbi_school'
+});
 
 const schema = `
+-- Drop existing tables (in order to recreate with new schema)
+DROP TABLE IF EXISTS grades CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS subjects CASCADE;
+DROP TABLE IF EXISTS students CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Users table
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role TEXT CHECK(role IN ('admin', 'teacher', 'secretary')) NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(50) CHECK (role IN ('admin', 'teacher', 'secretary')) NOT NULL,
+    secondary_role VARCHAR(50) CHECK (secondary_role IN ('admin', 'teacher', 'secretary')) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Students table
 CREATE TABLE IF NOT EXISTS students (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    phone TEXT,
-    matricule TEXT UNIQUE NOT NULL,
-    level TEXT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    matricule VARCHAR(255) UNIQUE NOT NULL,
+    level VARCHAR(50) NOT NULL,
     dob DATE,
-    pob TEXT,
-    gender TEXT,
-    parent_name TEXT,
-    parent_phone TEXT,
+    pob VARCHAR(255),
+    gender VARCHAR(10),
+    parent_name VARCHAR(255),
+    parent_phone VARCHAR(20),
     address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Subjects table
 CREATE TABLE IF NOT EXISTS subjects (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    code TEXT,
-    coefficient INTEGER NOT NULL DEFAULT 1,
-    level TEXT NOT NULL,
-    teacher_id INTEGER,
-    FOREIGN KEY (teacher_id) REFERENCES users(id)
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(50),
+    coefficient INTEGER DEFAULT 1 NOT NULL,
+    level VARCHAR(50) NOT NULL,
+    teacher_id INTEGER REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Grades table
 CREATE TABLE IF NOT EXISTS grades (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_id INTEGER NOT NULL,
-    subject_id INTEGER NOT NULL,
-    semester INTEGER CHECK(semester IN (1, 2, 3)) NOT NULL,
-    sequence INTEGER CHECK(sequence IN (1, 2)) NOT NULL,
-    grade REAL NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id) REFERENCES students(id),
-    FOREIGN KEY (subject_id) REFERENCES subjects(id),
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    subject_id INTEGER NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    semester INTEGER CHECK (semester IN (1, 2, 3)) NOT NULL,
+    sequence INTEGER CHECK (sequence IN (1, 2)) NOT NULL,
+    grade DECIMAL(5, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(student_id, subject_id, semester, sequence)
 );
 
+-- Payments table
 CREATE TABLE IF NOT EXISTS payments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    student_id INTEGER NOT NULL,
-    amount REAL NOT NULL,
-    payment_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    payment_type TEXT CHECK(payment_type IN ('Pension', 'Registration', 'Other')) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_type VARCHAR(50) CHECK (payment_type IN ('Pension', 'Registration', 'Other')) NOT NULL,
     comments TEXT,
-    recorded_by INTEGER,
-    FOREIGN KEY (student_id) REFERENCES students(id),
-    FOREIGN KEY (recorded_by) REFERENCES users(id)
+    recorded_by INTEGER REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Audit logs table
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER,
-    user_name TEXT NOT NULL,
-    user_role TEXT,
-    action TEXT NOT NULL,
-    entity_type TEXT,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    user_name VARCHAR(255) NOT NULL,
+    user_role VARCHAR(50),
+    action VARCHAR(255) NOT NULL,
+    entity_type VARCHAR(50),
     entity_id INTEGER,
-    entity_name TEXT,
+    entity_name VARCHAR(255),
     details TEXT,
-    ip_address TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Session table for express-session with connect-pg-simple
+DROP TABLE IF EXISTS session CASCADE;
+CREATE TABLE IF NOT EXISTS session (
+    sid VARCHAR NOT NULL PRIMARY KEY,
+    sess JSON NOT NULL,
+    expire TIMESTAMP NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_session_expire ON session (expire);
+
+-- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_student ON payments(student_id);
+CREATE INDEX IF NOT EXISTS idx_payments_date ON payments(payment_date);
+CREATE INDEX IF NOT EXISTS idx_grades_student ON grades(student_id);
+CREATE INDEX IF NOT EXISTS idx_grades_subject ON grades(subject_id);
+CREATE INDEX IF NOT EXISTS idx_subjects_teacher ON subjects(teacher_id);
 `;
 
-console.log('Initializing database...');
+console.log('Initializing PostgreSQL database...');
 
-db.serialize(() => {
-    db.exec(schema, (err) => {
-        if (err) {
-            console.error('Error initializing database:', err);
-        } else {
-            console.log('Database initialized successfully.');
-        }
-        db.close();
-    });
-});
+(async () => {
+    try {
+        await pool.query(schema);
+        console.log('Database initialized successfully.');
+        await pool.end();
+    } catch (err) {
+        console.error('Error initializing database:', err);
+        process.exit(1);
+    }
+})();

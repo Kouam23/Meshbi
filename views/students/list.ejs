@@ -73,6 +73,11 @@
                                                     class="btn-secondary btn-sm" style="color:var(--secondary-color)">
                                                     <%= t.student_add_payment %>
                                                 </a>
+                                                <form action="/students/<%= student.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('<%= t.confirm_delete %>');">
+                                                    <button type="submit" class="btn-secondary btn-sm" style="background-color:#e74c3c;color:white;">
+                                                        <%= t.delete %>
+                                                    </button>
+                                                </form>
                                                 <% } %>
                                         </td>
                                     </tr>

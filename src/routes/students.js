@@ -12,15 +12,18 @@ function isStaff(req, res, next) {
 }
 
 // Get all students
-router.get('/', isAuthenticated, (req, res) => {
-    db.all("SELECT * FROM students ORDER BY name", [], (err, students) => {
-        if (err) return res.status(500).send('Server Error');
+router.get('/', isAuthenticated, async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM students ORDER BY name");
         res.render('students/list', {
             title: 'Students List',
-            students,
+            students: result.rows,
             user: req.session.user
         });
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 // Show add student form
@@ -34,19 +37,17 @@ router.post('/add', isStaff, async (req, res) => {
 
     try {
         const matricule = await generateMatricule();
+        
+        // Convert empty strings to NULL for optional fields
+        const dobValue = dob && dob.trim() ? dob : null;
 
-        db.run(
+        await db.query(
             `INSERT INTO students (name, phone, matricule, level, dob, pob, gender, parent_name, parent_phone, address)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [name, phone || null, matricule, level, dob || null, pob || null, gender || null, parent_name || null, parent_phone || null, address || null],
-            function (err) {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).send('Error adding student: ' + err.message);
-                }
-                res.redirect('/students');
-            }
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+            [name, phone || null, matricule, level, dobValue, pob || null, gender || null, parent_name || null, parent_phone || null, address || null]
         );
+        
+        res.redirect('/students');
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -54,42 +55,78 @@ router.post('/add', isStaff, async (req, res) => {
 });
 
 // View student details
-router.get('/:id', isAuthenticated, (req, res) => {
-    const id = req.params.id;
-    db.get("SELECT * FROM students WHERE id = ?", [id], (err, student) => {
-        if (err || !student) return res.status(404).send('Student not found');
-        db.all("SELECT * FROM payments WHERE student_id = ? ORDER BY payment_date DESC", [id], (err2, payments) => {
-            const totalPaid = payments ? payments.reduce((sum, p) => sum + p.amount, 0) : 0;
-            res.render('students/view', {
-                title: student.name,
-                student,
-                payments: payments || [],
-                totalPaid,
-                user: req.session.user
-            });
+router.get('/:id', isAuthenticated, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const studentResult = await db.query("SELECT * FROM students WHERE id = $1", [id]);
+        
+        if (studentResult.rows.length === 0) {
+            return res.status(404).send('Student not found');
+        }
+        
+        const student = studentResult.rows[0];
+        const paymentsResult = await db.query("SELECT * FROM payments WHERE student_id = $1 ORDER BY payment_date DESC", [id]);
+        const payments = paymentsResult.rows;
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+        
+        res.render('students/view', {
+            title: student.name,
+            student,
+            payments,
+            totalPaid,
+            user: req.session.user
         });
-    });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 // Edit student form
-router.get('/:id/edit', isStaff, (req, res) => {
-    db.get("SELECT * FROM students WHERE id = ?", [req.params.id], (err, student) => {
-        if (err || !student) return res.status(404).send('Student not found');
-        res.render('students/edit', { title: 'Edit Student', student, user: req.session.user });
-    });
+router.get('/:id/edit', isStaff, async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM students WHERE id = $1", [req.params.id]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).send('Student not found');
+        }
+        
+        res.render('students/edit', { title: 'Edit Student', student: result.rows[0], user: req.session.user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 // Update student
-router.post('/:id/edit', isStaff, (req, res) => {
-    const { name, phone, level, dob, pob, gender, parent_name, parent_phone, address } = req.body;
-    db.run(
-        `UPDATE students SET name=?, phone=?, level=?, dob=?, pob=?, gender=?, parent_name=?, parent_phone=?, address=? WHERE id=?`,
-        [name, phone, level, dob, pob, gender, parent_name, parent_phone, address, req.params.id],
-        (err) => {
-            if (err) return res.status(500).send('Error updating student');
-            res.redirect('/students/' + req.params.id);
-        }
-    );
+router.post('/:id/edit', isStaff, async (req, res) => {
+    try {
+        const { name, phone, level, dob, pob, gender, parent_name, parent_phone, address } = req.body;
+        
+        // Convert empty strings to NULL for date fields
+        const dobValue = dob && dob.trim() ? dob : null;
+        
+        await db.query(
+            `UPDATE students SET name=$1, phone=$2, level=$3, dob=$4, pob=$5, gender=$6, parent_name=$7, parent_phone=$8, address=$9 WHERE id=$10`,
+            [name, phone || null, level, dobValue, pob || null, gender || null, parent_name || null, parent_phone || null, address || null, req.params.id]
+        );
+        
+        res.redirect('/students/' + req.params.id);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error updating student');
+    }
+});
+
+// Delete student
+router.post('/:id/delete', isStaff, async (req, res) => {
+    try {
+        await db.query("DELETE FROM students WHERE id = $1", [req.params.id]);
+        res.redirect('/students');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Error deleting student');
+    }
 });
 
 module.exports = router;

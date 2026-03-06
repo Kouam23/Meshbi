@@ -2,33 +2,31 @@
 
     <div class="main-content">
         <div class="page-header">
-            <h2>
-                <%= t.subjects_add_title %>
-            </h2>
+            <h2>Edit Subject</h2>
             <a href="/subjects" class="btn-secondary">
                 <%= t.back %>
             </a>
         </div>
 
         <div class="glass-card form-container" style="max-width:600px; margin:0 auto;">
-            <form action="/subjects/add" method="POST">
+            <form action="/subjects/<%= subject.id %>/edit" method="POST">
                 <div class="form-group">
                     <label>
                         <%= t.subject_name %> *
                     </label>
-                    <input type="text" name="name" required placeholder="ex. Mathematics">
+                    <input type="text" name="name" required placeholder="ex. Mathematics" value="<%= subject.name %>">
                 </div>
                 <div class="form-group">
                     <label>
                         <%= t.subject_code %>
                     </label>
-                    <input type="text" name="code" placeholder="ex. MATH">
+                    <input type="text" name="code" placeholder="ex. MATH" value="<%= subject.code || '' %>">
                 </div>
                 <div class="form-group">
                     <label>
                         <%= t.subject_coeff %>
                     </label>
-                    <input type="number" name="coefficient" value="1" min="1" max="10">
+                    <input type="number" name="coefficient" value="<%= subject.coefficient || 1 %>" min="1" max="10">
                 </div>
                 <div class="form-group">
                     <label>
@@ -39,7 +37,7 @@
                             <%= t.student_level_select %>
                         </option>
                         <% ['Level 1','Level 2','Level 3','Level 4','Master 1','Master 2','Doctorate'].forEach(l=> { %>
-                            <option value="<%= l %>">
+                            <option value="<%= l %>" <%= subject.level === l ? 'selected' : '' %>>
                                 <%= l %>
                             </option>
                             <% }) %>
@@ -54,14 +52,14 @@
                             <%= t.subject_no_teacher %>
                         </option>
                         <% teachers.forEach(teacher=> { %>
-                            <option value="<%= teacher.id %>">
+                            <option value="<%= teacher.id %>" <%= subject.teacher_id === teacher.id ? 'selected' : '' %>>
                                 <%= teacher.name %>
                             </option>
                             <% }) %>
                     </select>
                 </div>
                 <button type="submit" class="btn-primary" style="width:100%;">
-                    <%= t.subjects_add %>
+                    <%= t.save %>
                 </button>
             </form>
         </div>

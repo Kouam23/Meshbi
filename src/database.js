@@ -1,15 +1,21 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
 
-const dbPath = path.join(__dirname, '../school.db');
-
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database ' + dbPath + ': ' + err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
-        db.run('PRAGMA foreign_keys = ON');
-    }
+// PostgreSQL connection pool
+const pool = new Pool({
+    user: process.env.DB_USER || 'meshbi',
+    password: process.env.DB_PASSWORD || 'meshbi_password',
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME || 'meshbi_school'
 });
 
-module.exports = db;
+pool.on('connect', () => {
+    console.log('Connected to the PostgreSQL database.');
+});
+
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+    process.exit(-1);
+});
+
+module.exports = pool;

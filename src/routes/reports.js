@@ -11,28 +11,37 @@ function isAdmin(req, res, next) {
 }
 
 // Reports Dashboard
-router.get('/', isAdmin, (req, res) => {
-    // Get distinct levels
-    db.all("SELECT DISTINCT level FROM students ORDER BY level", [], (err, levels) => {
-        if (err) return res.status(500).send('Server Error');
-        res.render('admin/reports/dashboard', { title: 'Reports', levels, user: req.session.user });
-    });
+router.get('/', isAdmin, async (req, res) => {
+    try {
+        // Get distinct levels
+        const result = await db.query("SELECT DISTINCT level FROM students ORDER BY level");
+        res.render('admin/reports/dashboard', { title: 'Reports', levels: result.rows, user: req.session.user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 // Generate Bulletin
-router.get('/bulletin', isAdmin, (req, res) => {
-    const { level, student_id, semester, type } = req.query; // type can be 'semester' or 'annual'
+router.get('/bulletin', isAdmin, async (req, res) => {
+    try {
+        const { level, student_id, semester, type } = req.query; // type can be 'semester' or 'annual'
 
-    if (type === 'annual') {
-        // Handle annual average calculation
-        return generateAnnualBulletin(req, res, student_id);
-    }
+        if (type === 'annual') {
+            // Handle annual average calculation
+            return generateAnnualBulletin(req, res, student_id);
+        }
 
-    const currentSemester = parseInt(semester) || 1;
+        const currentSemester = parseInt(semester) || 1;
 
-    // 1. Get Student
-    db.get("SELECT * FROM students WHERE id = ?", [student_id], (err, student) => {
-        if (err || !student) return res.status(404).send('Student not found');
+        // 1. Get Student
+        const studentResult = await db.query("SELECT * FROM students WHERE id = $1", [student_id]);
+        
+        if (studentResult.rows.length === 0) {
+            return res.status(404).send('Student not found');
+        }
+        
+        const student = studentResult.rows[0];
 
         // 2. Get Subjects and Grades
         const sql = `
@@ -41,106 +50,98 @@ router.get('/bulletin', isAdmin, (req, res) => {
                    MAX(CASE WHEN g.sequence = 2 THEN g.grade ELSE NULL END) as seq2,
                    u.name as teacher_name
             FROM subjects s
-            LEFT JOIN grades g ON s.id = g.subject_id AND g.student_id = ? AND g.semester = ?
+            LEFT JOIN grades g ON s.id = g.subject_id AND g.student_id = $1 AND g.semester = $2
             LEFT JOIN users u ON s.teacher_id = u.id
-            WHERE s.level = ?
-            GROUP BY s.id
+            WHERE s.level = $3
+            GROUP BY s.id, s.name, s.code, s.coefficient, u.name
         `;
 
-        db.all(sql, [student_id, currentSemester, student.level], (err, rows) => {
-            if (err) return res.status(500).send('Database Error');
+        const gradesResult = await db.query(sql, [student_id, currentSemester, student.level]);
+        const rows = gradesResult.rows;
 
-            let totalCoeff = 0;
-            let totalPoints = 0;
+        let totalCoeff = 0;
+        let totalPoints = 0;
 
-            const results = rows.map(row => {
-                const seq1 = row.seq1 !== null ? row.seq1 : 0; // Treat missing as 0? or ignore? Let's say 0 for now.
-                const seq2 = row.seq2 !== null ? row.seq2 : 0;
+        const results = rows.map(row => {
+            const seq1 = row.seq1 !== null ? row.seq1 : 0;
+            const seq2 = row.seq2 !== null ? row.seq2 : 0;
 
-                // Average of sequences
-                // If one exists only? Let's assume (Seq1+Seq2)/2 always.
-                const subjectAvg = (seq1 + seq2) / 2;
-                const weightedPoint = subjectAvg * row.coefficient;
+            const subjectAvg = (seq1 + seq2) / 2;
+            const weightedPoint = subjectAvg * row.coefficient;
 
-                totalCoeff += row.coefficient;
-                totalPoints += weightedPoint;
+            totalCoeff += row.coefficient;
+            totalPoints += weightedPoint;
 
-                return {
-                    ...row,
-                    seq1,
-                    seq2,
-                    subjectAvg,
-                    weightedPoint
-                };
-            });
-
-            const semesterAvg = totalCoeff > 0 ? (totalPoints / totalCoeff) : 0;
-
-            res.render('admin/reports/bulletin', {
-                title: 'Bulletin',
-                student,
-                semester: currentSemester,
-                results,
-                summary: { totalPoints, totalCoeff, semesterAvg },
-                user: req.session.user
-            });
+            return {
+                ...row,
+                seq1,
+                seq2,
+                subjectAvg,
+                weightedPoint
+            };
         });
-    });
+
+        const semesterAvg = totalCoeff > 0 ? (totalPoints / totalCoeff) : 0;
+
+        res.render('admin/reports/bulletin', {
+            title: 'Bulletin',
+            student,
+            semester: currentSemester,
+            results,
+            summary: { totalPoints, totalCoeff, semesterAvg },
+            user: req.session.user
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Database Error');
+    }
 });
 
 // Helper for Annual Bulletin
-function generateAnnualBulletin(req, res, studentId) {
-    db.get("SELECT * FROM students WHERE id = ?", [studentId], (err, student) => {
-        if (err || !student) return res.status(404).send('Student not found');
+async function generateAnnualBulletin(req, res, studentId) {
+    try {
+        const studentResult = await db.query("SELECT * FROM students WHERE id = $1", [studentId]);
+        
+        if (studentResult.rows.length === 0) {
+            return res.status(404).send('Student not found');
+        }
+        
+        const student = studentResult.rows[0];
 
-        // Allow calculation of annual average even if some grades are missing
-        // Strategy: Calculate Avg for Sem 1, Sem 2, Sem 3 then average them.
-
-        const getSemesterData = (sem) => {
-            return new Promise((resolve, reject) => {
-                const sql = `
-                    SELECT s.coefficient, g.grade, g.sequence
-                    FROM subjects s
-                    JOIN grades g ON s.id = g.subject_id
-                    WHERE g.student_id = ? AND g.semester = ? AND s.level = ?
-                `;
-                db.all(sql, [studentId, sem, student.level], (err, rows) => {
-                    if (err) reject(err);
-                    else resolve(rows);
-                });
-            });
+        const getSemesterData = async (sem) => {
+            const sql = `
+                SELECT s.coefficient, g.grade, g.sequence
+                FROM subjects s
+                JOIN grades g ON s.id = g.subject_id
+                WHERE g.student_id = $1 AND g.semester = $2 AND s.level = $3
+            `;
+            const result = await db.query(sql, [studentId, sem, student.level]);
+            return result.rows;
         };
 
-        Promise.all([getSemesterData(1), getSemesterData(2), getSemesterData(3)])
-            .then(semesters => {
-                const semAverages = semesters.map((rows, index) => {
-                    // Logic: Aggregate by subject first?
-                    // Actually, simpler: Recalculate 'Report Card' logic logic for each sem.
-                    // This is complex to do purely in JS without re-querying structure.
+        const [sem1, sem2, sem3] = await Promise.all([
+            getSemesterData(1),
+            getSemesterData(2),
+            getSemesterData(3)
+        ]);
 
-                    // Simplified estimation:
-                    // We need sum(SubjectAvg * Coeff) / sum(Coeff) for each semester.
-                    // But we only have raw grades here.
-                    // Let's re-use the logic. It's better to refactor the semester calculation into a function.
-                    return 0; // Placeholder for now - logic too complex for quick inline.
-                });
-
-                // For MVP, let's just render the Semester Bulletin correctly first.
-                // I will add Annual support if time permits or if strictly requested as "imprimer le bulletin" usually means one.
-                // The prompt says "imprimer le bulletin" (singular) but mentions calculations for annual.
-
-                res.send("Annual Report Logic is complex, please use Semester reports for now.");
-            })
-            .catch(err => res.status(500).send(err));
-    });
+        // For MVP, let's just render the Semester Bulletin correctly first
+        res.send("Annual Report Logic is complex, please use Semester reports for now.");
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 }
 
 // API to get students by level for dropdowns
-router.get('/api/students/:level', isAdmin, (req, res) => {
-    db.all("SELECT id, name, matricule FROM students WHERE level = ? ORDER BY name", [req.params.level], (err, students) => {
-        if (err) return res.status(500).json({ error: 'Error' });
-        res.json(students);
-    });
+router.get('/api/students/:level', isAdmin, async (req, res) => {
+    try {
+        const result = await db.query("SELECT id, name, matricule FROM students WHERE level = $1 ORDER BY name", [req.params.level]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error' });
+    }
 });
 
 module.exports = router;

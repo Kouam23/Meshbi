@@ -13,6 +13,11 @@
                     <a href="/payments/add?student_id=<%= student.id %>" class="btn-primary">
                         <%= t.student_add_payment %>
                     </a>
+                    <form action="/students/<%= student.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('<%= t.confirm_delete %>');">
+                        <button type="submit" class="btn-danger" style="background-color:#e74c3c;color:white;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:0.95rem;">
+                            <%= t.delete %>
+                        </button>
+                    </form>
                     <% } %>
                         <a href="/students" class="btn-secondary">
                             <%= t.back %>

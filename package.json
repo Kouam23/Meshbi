@@ -13,12 +13,11 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
-    "better-sqlite3": "^12.6.2",
-    "connect-sqlite3": "^0.9.13",
+    "connect-pg-simple": "^10.0.0",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "express-session": "^1.18.0",
-    "sqlite3": "^5.1.7"
+    "pg": "^8.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.3"

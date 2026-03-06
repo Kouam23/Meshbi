@@ -18,7 +18,7 @@ const db = require('../database');
  * @param {string} options.details - Additional details (optional)
  * @param {string} options.ipAddress - IP address of the request (optional)
  */
-function logAction(options) {
+async function logAction(options) {
     const {
         userId,
         userName,
@@ -31,29 +31,26 @@ function logAction(options) {
         ipAddress = null
     } = options;
 
-    const stmt = db.prepare(`
-        INSERT INTO audit_logs (
-            user_id, user_name, user_role, action, 
-            entity_type, entity_id, entity_name, details, ip_address
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
-        userId,
-        userName,
-        userRole,
-        action,
-        entityType,
-        entityId,
-        entityName,
-        details,
-        ipAddress,
-        (err) => {
-            if (err) {
-                console.error('Error logging audit action:', err);
-            }
-        }
-    );
+    try {
+        await db.query(`
+            INSERT INTO audit_logs (
+                user_id, user_name, user_role, action, 
+                entity_type, entity_id, entity_name, details, ip_address
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, [
+            userId,
+            userName,
+            userRole,
+            action,
+            entityType,
+            entityId,
+            entityName,
+            details,
+            ipAddress
+        ]);
+    } catch (err) {
+        console.error('Error logging audit action:', err);
+    }
 }
 
 /**

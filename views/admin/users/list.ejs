@@ -58,6 +58,9 @@
                                         </td>
                                         <td>
                                             <% if (u.id !==user.id) { %>
+                                                <a href="/users/<%= u.id %>/edit" class="btn-secondary btn-sm">
+                                                    <%= t.edit %>
+                                                </a>
                                                 <form action="/users/<%= u.id %>/delete" method="POST"
                                                     style="display:inline;"
                                                     onsubmit="return confirm('<%= t.confirm_delete %>')">

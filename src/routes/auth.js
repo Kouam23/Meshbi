@@ -50,14 +50,12 @@ function hasRole(role) {
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-router.post('/login', (req, res) => {
-    const { email, password } = req.body;
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-    db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Server Error');
-        }
+        const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+        const user = result.rows[0];
 
         if (user) {
             const match = await bcrypt.compare(password, user.password);
@@ -82,12 +80,20 @@ router.post('/login', (req, res) => {
                     ipAddress: req.auditLog.ipAddress
                 });
 
-                // Redirect to primary role dashboard
-                if (user.role === 'admin') return res.redirect('/admin');
-                if (user.role === 'secretary') return res.redirect('/secretary');
-                if (user.role === 'teacher') return res.redirect('/teacher');
+                // Save session before redirecting
+                return req.session.save((err) => {
+                    if (err) {
+                        console.error('Session save error:', err);
+                        return res.status(500).send('Login error');
+                    }
+                    
+                    // Redirect to primary role dashboard
+                    if (user.role === 'admin') return res.redirect('/admin');
+                    if (user.role === 'secretary') return res.redirect('/secretary');
+                    if (user.role === 'teacher') return res.redirect('/teacher');
 
-                return res.redirect('/');
+                    return res.redirect('/');
+                });
             }
         }
 
@@ -102,17 +108,27 @@ router.post('/login', (req, res) => {
             ipAddress: req.auditLog.ipAddress
         });
 
-        res.render('login', { title: 'Login', error: 'Invalid credentials' });
-    });
+        res.render('login', { title: 'Login', error: 'Invalid credentials', query: req.query });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
 });
 
 router.post('/refresh-session', (req, res) => {
     if (req.session.user) {
         // Update last activity time to extend session
         req.session.lastActivity = Date.now();
-        return res.json({ success: true });
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ error: 'Session refresh failed' });
+            }
+            res.json({ success: true });
+        });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
     }
-    res.status(401).json({ error: 'Not authenticated' });
 });
 
 router.get('/logout', (req, res) => {
@@ -131,8 +147,14 @@ router.get('/logout', (req, res) => {
         });
     }
     
-    req.session.destroy();
-    res.redirect('/login');
+    // Destroy session with callback to ensure it completes before redirecting
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Session destroy error:', err);
+            return res.status(500).send('Logout error');
+        }
+        res.redirect('/login');
+    });
 });
 
 module.exports = { router, isAuthenticated, isAdmin, isTeacher, isSecretary, isStaff, hasRole, userHasRole };

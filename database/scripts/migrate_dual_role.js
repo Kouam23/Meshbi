@@ -1,7 +1,7 @@
 /**
  * Migration: Add secondary_role to users and merge dual-role accounts
  */
-const db = require('../database');
+const db = require('../../backend/src/database');
 
 const run = (sql, params = []) => new Promise((resolve, reject) =>
     db.run(sql, params, function (err) { err ? reject(err) : resolve(this); }));

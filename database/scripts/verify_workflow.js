@@ -1,4 +1,4 @@
-const db = require('../database');
+const db = require('../../backend/src/database');
 const { generateMatricule } = require('../utils/matricule');
 
 async function verify() {

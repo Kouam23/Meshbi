@@ -1,0 +1,60 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2><%= t.payments_search_title %></h2>
+        </div>
+
+        <div class="glass-card form-container" style="max-width:600px; margin:0 auto;">
+            <form action="/payments/search" method="GET" style="margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label><%= t.payments_search_label %></label>
+                    <input 
+                        type="text" 
+                        name="q" 
+                        placeholder="<%= t.payments_search_placeholder %>" 
+                        value="<%= query %>"
+                        autofocus
+                    >
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%;"><%= t.search %></button>
+            </form>
+        </div>
+
+        <% if (query && students.length === 0) { %>
+            <div class="glass-card" style="text-align:center;color:var(--text-muted);">
+                <p><%= t.payments_search_no_results %> "<%= query %>"</p>
+            </div>
+        <% } else if (students.length > 0) { %>
+            <div class="glass-card" style="padding:0;overflow:hidden;">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th><%= t.student_col_matricule %></th>
+                                <th><%= t.student_col_name %></th>
+                                <th><%= t.student_col_level %></th>
+                                <th><%= t.student_col_actions %></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(student => { %>
+                                <tr>
+                                    <td><span class="badge badge-primary"><%= student.matricule %></span></td>
+                                    <td><strong><%= student.name %></strong></td>
+                                    <td><%= student.level %></td>
+                                    <td>
+                                        <a href="/payments/add?student_id=<%= student.id %>" class="btn-primary btn-sm">
+                                            <%= t.payments_record %>
+                                        </a>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        <% } %>
+    </div>
+
+    <%- include('../partials/footer') %>

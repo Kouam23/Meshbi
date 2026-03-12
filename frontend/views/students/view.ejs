@@ -1,0 +1,160 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.students_profile %>
+            </h2>
+            <div style="display:flex; gap:1rem;">
+                <% if (user.role==='admin' || user.role==='secretary' ) { %>
+                    <a href="/students/<%= student.id %>/edit" class="btn-secondary">
+                        <%= t.edit %>
+                    </a>
+                    <a href="/payments/add?student_id=<%= student.id %>" class="btn-primary">
+                        <%= t.student_add_payment %>
+                    </a>
+                    <form action="/students/<%= student.id %>/delete" method="POST" style="display:inline;" onsubmit="return confirm('<%= t.confirm_delete %>');">
+                        <button type="submit" class="btn-danger" style="background-color:#e74c3c;color:white;border:none;padding:0.75rem 1.5rem;border-radius:6px;cursor:pointer;font-size:0.95rem;">
+                            <%= t.delete %>
+                        </button>
+                    </form>
+                    <% } %>
+                        <a href="/students" class="btn-secondary">
+                            <%= t.back %>
+                        </a>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; flex-wrap:wrap;">
+            <div class="glass-card">
+                <h3 style="margin-bottom:1.5rem;color:var(--primary-color)">
+                    <%= t.student_personal_info %>
+                </h3>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_name %></strong></span>
+                        <strong style="word-break:break-word;">
+                            <%= student.name %>
+                        </strong>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;align-items:center;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_matricule %></strong></span>
+                        <span class="badge badge-primary">
+                            <%= student.matricule %>
+                        </span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_level %></strong></span>
+                        <span><%= student.level %></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_gender %></strong></span>
+                        <span><%= student.gender || t.na %></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_dob %></strong></span>
+                        <span><%= student.dob || t.na %></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_pob %></strong></span>
+                        <span><%= student.pob || t.na %></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_phone %></strong></span>
+                        <span><%= student.phone || t.na %></span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;">
+                        <span style="color:var(--text-muted);font-size:0.9rem;"><strong><%= t.student_address %></strong></span>
+                        <span style="word-break:break-word;"><%= student.address || t.na %></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <h3 style="margin-bottom:1.5rem;color:var(--primary-color)">
+                    <%= t.student_parent_info %>
+                </h3>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:0.6rem 0;color:var(--text-muted);width:42%">
+                            <%= t.student_parent_name %>
+                        </td>
+                        <td><strong>
+                                <%= student.parent_name || t.na %>
+                            </strong></td>
+                    </tr>
+                    <tr>
+                        <td style="padding:0.6rem 0;color:var(--text-muted)">
+                            <%= t.student_parent_phone %>
+                        </td>
+                        <td>
+                            <%= student.parent_phone || t.na %>
+                        </td>
+                    </tr>
+                </table>
+                <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border-color)">
+                <h3 style="margin-bottom:1rem;color:var(--secondary-color)">
+                    <%= t.student_payment_summary %>
+                </h3>
+                <p style="font-size:2rem;font-weight:800;color:var(--text-main)">
+                    <%= totalPaid.toLocaleString() %> <span style="font-size:1rem;color:var(--text-muted)">
+                            <%= t.student_paid %>
+                        </span>
+                </p>
+            </div>
+        </div>
+
+        <div class="glass-card" style="margin-top:2rem;padding:0;overflow:hidden;">
+            <div style="padding:1.5rem;border-bottom:1px solid var(--border-color)">
+                <h3>
+                    <%= t.student_payment_history %>
+                </h3>
+            </div>
+            <% if (payments.length===0) { %>
+                <p style="padding:2rem;text-align:center;color:var(--text-muted)">
+                    <%= t.student_no_payments %>
+                </p>
+                <% } else { %>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <%= t.payments_col_date %>
+                                </th>
+                                <th>
+                                    <%= t.payments_col_type %>
+                                </th>
+                                <th>
+                                    <%= t.payments_col_amount %>
+                                </th>
+                                <th>
+                                    <%= t.payments_col_comment %>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% payments.forEach(p=> { %>
+                                <tr>
+                                    <td>
+                                        <%= new Date(p.payment_date).toLocaleDateString(lang==='fr' ? 'fr-FR' : 'en-US'
+                                            ) %>
+                                    </td>
+                                    <td><span
+                                            class="badge badge-<%= p.payment_type === 'Pension' ? 'primary' : 'success' %>">
+                                            <%= p.payment_type %>
+                                        </span></td>
+                                    <td><strong>
+                                            <%= p.amount.toLocaleString() %> FCFA
+                                        </strong></td>
+                                    <td style="color:var(--text-muted)">
+                                        <%= p.comment || t.na %>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                    <% } %>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

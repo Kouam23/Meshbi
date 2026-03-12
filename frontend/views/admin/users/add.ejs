@@ -1,0 +1,64 @@
+<%- include('../../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.users_add_title %>
+            </h2>
+            <a href="/users" class="btn-secondary">
+                <%= t.back %>
+            </a>
+        </div>
+
+        <div class="glass-card form-container" style="max-width:600px; margin:0 auto;">
+            <% if (error) { %>
+                <div
+                    style="background:#fee2e2;color:#b91c1c;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1.5rem;border:1px solid #fecaca;">
+                    ⚠️ <%= error %>
+                </div>
+                <% } %>
+                    <form action="/users/add" method="POST">
+                        <div class="form-group">
+                            <label>
+                                <%= t.user_name %> *
+                            </label>
+                            <input type="text" name="name" required placeholder="ex. Jean Dupont">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <%= t.user_email %> *
+                            </label>
+                            <input type="email" name="email" required placeholder="ex. jean@meshbi.com">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <%= t.user_password %> *
+                            </label>
+                            <input type="password" name="password" required
+                                placeholder="Min. 6 caractères / characters">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <%= t.user_role %> *
+                            </label>
+                            <select name="role" required>
+                                <option value="">
+                                    <%= t.user_role_select %>
+                                </option>
+                                <option value="admin">Admin</option>
+                                <option value="teacher">
+                                    <%= lang==='fr' ? 'Enseignant' : 'Teacher' %>
+                                </option>
+                                <option value="secretary">
+                                    <%= lang==='fr' ? 'Secrétaire' : 'Secretary' %>
+                                </option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width:100%;">
+                            <%= t.user_create_btn %>
+                        </button>
+                    </form>
+        </div>
+    </div>
+
+    <%- include('../../partials/footer') %>

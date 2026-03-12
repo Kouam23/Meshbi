@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: meshbi-db
+    environment:
+      POSTGRES_USER: meshbi
+      POSTGRES_PASSWORD: meshbi_password
+      POSTGRES_DB: meshbi_school
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meshbi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - meshbi-network
+
+  # Node.js Backend
+  backend:
+    build: .
+    container_name: meshbi-app
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: meshbi_school
+      DB_USER: meshbi
+      DB_PASSWORD: meshbi_password
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - meshbi-network
+    command: npm start
+
+volumes:
+  postgres_data:
+
+networks:
+  meshbi-network:
+    driver: bridge

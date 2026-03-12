@@ -1,0 +1,86 @@
+<%- include('../../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.reports_title %>
+            </h2>
+        </div>
+
+        <div class="glass-card form-container" style="max-width:600px; margin:0 auto;">
+            <form action="/reports/bulletin" method="GET" target="_blank">
+                <div class="form-group">
+                    <label>
+                        <%= t.reports_level %>
+                    </label>
+                    <select id="levelSelect" name="level" required onchange="loadStudents()">
+                        <option value="">
+                            <%= t.reports_select_level %>
+                        </option>
+                        <% levels.forEach(l=> { %>
+                            <option value="<%= l.level %>">
+                                <%= l.level %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <%= t.reports_student %>
+                    </label>
+                    <select id="studentSelect" name="student_id" required>
+                        <option value="">
+                            <%= t.reports_level_first %>
+                        </option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <%= t.reports_semester %>
+                    </label>
+                    <select name="semester">
+                        <option value="1">
+                            <%= t.reports_semester1 %>
+                        </option>
+                        <option value="2">
+                            <%= t.reports_semester2 %>
+                        </option>
+                        <option value="3">
+                            <%= t.reports_semester3 %>
+                        </option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%;">
+                    <%= t.reports_generate %>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const langLevelFirst = '<%= t.reports_level_first %>';
+        const langSelectStudent = '<%= t.reports_select_student %>';
+
+        async function loadStudents() {
+            const level = document.getElementById('levelSelect').value;
+            const studentSelect = document.getElementById('studentSelect');
+            if (!level) {
+                studentSelect.innerHTML = `<option value="">${langLevelFirst}</option>`;
+                return;
+            }
+            try {
+                const res = await fetch(`/reports/api/students/${encodeURIComponent(level)}`);
+                const students = await res.json();
+                let html = `<option value="">${langSelectStudent}</option>`;
+                students.forEach(s => {
+                    html += `<option value="${s.id}">${s.name} (${s.matricule})</option>`;
+                });
+                studentSelect.innerHTML = html;
+            } catch (e) { console.error(e); }
+        }
+    </script>
+
+    <%- include('../../partials/footer') %>

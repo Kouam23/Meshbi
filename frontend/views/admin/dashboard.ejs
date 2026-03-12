@@ -1,0 +1,104 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.nav_dashboard %>
+            </h2>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="glass-card dash-card">
+                <h3>👥 <%= t.admin_dash_students %>
+                </h3>
+                <p>
+                    <%= t.admin_dash_students_desc %>
+                </p>
+                <a href="/students" class="btn-primary">
+                    <%= t.admin_dash_students %>
+                </a>
+            </div>
+            <div class="glass-card dash-card">
+                <h3>📚 <%= t.admin_dash_subjects %>
+                </h3>
+                <p>
+                    <%= t.admin_dash_subjects_desc %>
+                </p>
+                <a href="/subjects" class="btn-primary">
+                    <%= t.admin_dash_subjects %>
+                </a>
+            </div>
+            <div class="glass-card dash-card">
+                <h3>📊 <%= t.admin_dash_reports %>
+                </h3>
+                <p>
+                    <%= t.admin_dash_reports_desc %>
+                </p>
+                <a href="/reports" class="btn-primary">
+                    <%= t.admin_dash_reports %>
+                </a>
+            </div>
+            <div class="glass-card dash-card">
+                <h3>💰 <%= t.admin_dash_payments %>
+                </h3>
+                <p>
+                    <%= t.admin_dash_payments_desc %>
+                </p>
+                <a href="/students" class="btn-primary">
+                    <%= t.nav_students %>
+                </a>
+            </div>
+            <div class="glass-card dash-card">
+                <h3>🔐 <%= t.admin_dash_users %>
+                </h3>
+                <p>
+                    <%= t.admin_dash_users_desc %>
+                </p>
+                <a href="/users" class="btn-primary">
+                    <%= t.admin_dash_users %>
+                </a>
+            </div>
+            <div class="glass-card dash-card">
+                <h3>📋 Audit Logs</h3>
+                <p>
+                    View all system activities and user actions with timestamps.
+                </p>
+                <a href="/audit" class="btn-primary">
+                    View Logs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .dash-card {
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .dash-card:hover {
+            border-top-color: var(--primary-color);
+        }
+
+        .dash-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .dash-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            flex-grow: 1;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+
+    <%- include('../partials/footer') %>

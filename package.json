@@ -1,0 +1,28 @@
+{
+  "name": "meshbi-school-system",
+  "version": "1.0.0",
+  "description": "School management system for Meshbi",
+  "main": "backend/app.js",
+  "scripts": {
+    "start": "node backend/app.js",
+    "dev": "nodemon backend/app.js",
+    "init-db": "node database/scripts/init_db.js",
+    "seed-users": "node database/scripts/seed_users.js",
+    "seed-db": "node database/scripts/seed_db.js",
+    "migrate": "node database/scripts/migrate_dual_role.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "connect-pg-simple": "^10.0.0",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-session": "^1.18.0",
+    "pg": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

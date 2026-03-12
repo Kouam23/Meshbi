@@ -1,0 +1,98 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <% if (success === 'grades_saved') { %>
+            <div id="successNotification" style="background-color:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:1rem;border-radius:6px;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;">
+                <span>
+                    <%= t.grades_saved %>
+                </span>
+                <button type="button" onclick="document.getElementById('successNotification').style.display='none';" style="background:none;border:none;color:#155724;cursor:pointer;font-size:1.5rem;line-height:1;">
+                    ×
+                </button>
+            </div>
+            <script>
+                // Auto-dismiss notification after 5 seconds
+                setTimeout(function() {
+                    const notification = document.getElementById('successNotification');
+                    if (notification) {
+                        notification.style.transition = 'opacity 0.3s ease-out';
+                        notification.style.opacity = '0';
+                        setTimeout(() => notification.style.display = 'none', 300);
+                    }
+                }, 5000);
+            </script>
+        <% } %>
+
+        <div class="page-header">
+            <div>
+                <h2>
+                    <%= subject.name %> (<%= subject.level %>)
+                </h2>
+                <p>Enter grades for students</p>
+            </div>
+            <a href="/teacher" class="btn-secondary">Back to Dashboard</a>
+        </div>
+
+        <div class="glass-card" style="margin-bottom: 2rem;">
+            <form action="/teacher/subject/<%= subject.id %>" method="GET" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Semester</label>
+                    <select name="semester" onchange="this.form.submit()">
+                        <option value="1" <%=filters.semester===1 ? 'selected' : '' %>>Semester 1</option>
+                        <option value="2" <%=filters.semester===2 ? 'selected' : '' %>>Semester 2</option>
+                        <option value="3" <%=filters.semester===3 ? 'selected' : '' %>>Semester 3</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Sequence</label>
+                    <select name="sequence" onchange="this.form.submit()">
+                        <option value="1" <%=filters.sequence===1 ? 'selected' : '' %>>Sequence 1</option>
+                        <option value="2" <%=filters.sequence===2 ? 'selected' : '' %>>Sequence 2</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <div class="glass-card" style="padding:0;overflow:hidden;">
+            <form action="/teacher/grades" method="POST">
+                <input type="hidden" name="subject_id" value="<%= subject.id %>">
+                <input type="hidden" name="semester" value="<%= filters.semester %>">
+                <input type="hidden" name="sequence" value="<%= filters.sequence %>">
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Student Name</th>
+                                <th>Grade (/20)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% students.forEach(student=> { %>
+                                <tr>
+                                    <td>
+                                        <%= student.matricule %>
+                                    </td>
+                                    <td>
+                                        <%= student.name %>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="grades[<%= student.id %>]"
+                                            value="<%= student.grade || '' %>" min="0" max="20" step="0.25"
+                                            class="grade-input" placeholder="-" style="width:70px;padding:0.5rem;border:1px solid #e5e7eb;border-radius:4px;">
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="padding:1.5rem;border-top:1px solid var(--border-color);text-align:right;">
+                    <button type="submit" class="btn-primary">Save Grades</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

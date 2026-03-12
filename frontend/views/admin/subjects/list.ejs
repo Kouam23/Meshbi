@@ -1,0 +1,76 @@
+<%- include('../../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                <%= t.subjects_title %>
+            </h2>
+            <a href="/subjects/add" class="btn-primary">
+                <%= t.subjects_add %>
+            </a>
+        </div>
+
+        <div class="glass-card" style="padding:0;overflow:hidden;">
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <%= t.subjects_col_name %>
+                            </th>
+                            <th>
+                                <%= t.subjects_col_code %>
+                            </th>
+                            <th>
+                                <%= t.subjects_col_coeff %>
+                            </th>
+                            <th>
+                                <%= t.subjects_col_level %>
+                            </th>
+                            <th>
+                                <%= t.subjects_col_teacher %>
+                            </th>
+                            <th>
+                                <%= t.subjects_col_actions %>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% subjects.forEach(subject=> { %>
+                            <tr>
+                                <td><strong>
+                                        <%= subject.name %>
+                                    </strong></td>
+                                <td><span class="badge badge-warning">
+                                        <%= subject.code %>
+                                    </span></td>
+                                <td>
+                                    <%= subject.coefficient %>
+                                </td>
+                                <td>
+                                    <%= subject.level %>
+                                </td>
+                                <td style="color:var(--text-muted)">
+                                    <%= subject.teacher_name || t.na %>
+                                </td>
+                                <td>
+                                    <a href="/subjects/<%= subject.id %>/edit" class="btn-secondary btn-sm">
+                                        <%= t.edit %>
+                                    </a>
+                                    <form action="/subjects/<%= subject.id %>/delete" method="POST" style="display:inline;"
+                                        onsubmit="return confirm('<%= t.confirm_delete %>')">
+                                        <button type="submit" class="btn-secondary btn-sm"
+                                            style="color:#ef4444;border-color:#ef4444;">
+                                            <%= t.delete %>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <% }) %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../../partials/footer') %>

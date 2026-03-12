@@ -1,0 +1,169 @@
+<%- include('../partials/header', { user: user }) %>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h2><%= t.audit_logs_title || 'Audit Logs' %></h2>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+                <a href="/admin" class="btn-secondary">
+                    <%= t.back %>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="glass-card" style="margin-bottom:1.5rem;">
+            <h3 style="margin-bottom:1rem;color:var(--primary-color);">Filter Logs</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate" style="width:100%;padding:0.65rem;">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>End Date</label>
+                    <input type="date" id="endDate" style="width:100%;padding:0.65rem;">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Role</label>
+                    <select id="userRole" style="width:100%;padding:0.65rem;">
+                        <option value="all">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="secretary">Secretary</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Action</label>
+                    <select id="action" style="width:100%;padding:0.65rem;">
+                        <option value="all">All Actions</option>
+                        <option value="LOGIN">Login</option>
+                        <option value="LOGIN_FAILED">Login Failed</option>
+                        <option value="LOGOUT">Logout</option>
+                        <option value="CREATE">Create</option>
+                        <option value="UPDATE">Update</option>
+                        <option value="DELETE">Delete</option>
+                        <option value="VIEW">View</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="filterLogs()" class="btn-primary" style="margin-top:1rem;width:100%;">
+                Apply Filter
+            </button>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="glass-card" style="padding:0;overflow:hidden;">
+            <% if (logs && logs.length > 0) { %>
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>User</th>
+                                <th>Role</th>
+                                <th>Action</th>
+                                <th>Entity Type</th>
+                                <th>Entity Name</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% logs.forEach(log => { %>
+                                <tr>
+                                    <td>
+                                        <small>
+                                            <%= new Date(log.created_at).toLocaleString() %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong><%= log.user_name %></strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<%= log.user_role === 'admin' ? 'primary' : log.user_role === 'teacher' ? 'success' : 'warning' %>">
+                                            <%= log.user_role || 'unknown' %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge <%= log.action === 'DELETE' ? 'badge-danger' : log.action.includes('LOGIN') ? 'badge-primary' : log.action === 'CREATE' ? 'badge-success' : 'badge-warning' %>" style="<%= log.action === 'DELETE' ? 'background:#fee2e2;color:#b91c1c;' : '' %>">
+                                            <%= log.action %>
+                                        </span>
+                                    </td>
+                                    <td><small><%= log.entity_type || '—' %></small></td>
+                                    <td><small><%= log.entity_name || '—' %></small></td>
+                                    <td><small><%= log.ip_address || '—' %></small></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div style="padding:1.5rem;text-align:center;border-top:1px solid var(--border-color);">
+                    <% if (page > 1) { %>
+                        <a href="/audit?page=<%= page - 1 %>" class="btn-secondary btn-sm">← Previous</a>
+                    <% } %>
+                    
+                    <span style="margin:0 1rem;color:var(--text-muted);">
+                        Page <%= page %> of <%= totalPages %> (Total: <%= total %> logs)
+                    </span>
+                    
+                    <% if (page < totalPages) { %>
+                        <a href="/audit?page=<%= page + 1 %>" class="btn-secondary btn-sm">Next →</a>
+                    <% } %>
+                </div>
+            <% } else { %>
+                <div style="padding:2rem;text-align:center;color:var(--text-muted);">
+                    <p>No audit logs found.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <style>
+        .badge-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+    </style>
+
+    <script>
+        function filterLogs() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const userRole = document.getElementById('userRole').value;
+            const action = document.getElementById('action').value;
+
+            let url = '/audit/filter?';
+            if (startDate) url += 'startDate=' + startDate + '&';
+            if (endDate) url += 'endDate=' + endDate + '&';
+            if (userRole !== 'all') url += 'userRole=' + userRole + '&';
+            if (action !== 'all') url += 'action=' + action;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('.data-table tbody');
+                    tbody.innerHTML = '';
+
+                    if (data.logs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No logs match the filter criteria.</td></tr>';
+                        return;
+                    }
+
+                    data.logs.forEach(log => {
+                        const row = `<tr>
+                            <td><small>${new Date(log.created_at).toLocaleString()}</small></td>
+                            <td><strong>${log.user_name}</strong></td>
+                            <td><span class="badge badge-${log.user_role === 'admin' ? 'primary' : log.user_role === 'teacher' ? 'success' : 'warning'}">${log.user_role || 'unknown'}</span></td>
+                            <td><span class="badge">${log.action}</span></td>
+                            <td><small>${log.entity_type || '—'}</small></td>
+                            <td><small>${log.entity_name || '—'}</small></td>
+                            <td><small>${log.ip_address || '—'}</small></td>
+                        </tr>`;
+                        tbody.innerHTML += row;
+                    });
+                })
+                .catch(err => console.error('Filter error:', err));
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

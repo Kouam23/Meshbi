@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %> — Meshbi School
+    </title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="nav-brand">🏫 Meshbi</a>
+
+        <!-- Hamburger button (visible on mobile) -->
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+
+        <div class="nav-links" id="navLinks">
+            <% const isAdmin=user.role==='admin' || user.secondary_role==='admin' ; const
+                isTeacher=user.role==='teacher' || user.secondary_role==='teacher' ; const
+                isSecretary=user.role==='secretary' || user.secondary_role==='secretary' ; %>
+
+                <% if (isAdmin) { %>
+                    <a href="/admin">
+                        <%= t.nav_dashboard %>
+                    </a>
+                    <a href="/students">
+                        <%= t.nav_students %>
+                    </a>
+                    <a href="/subjects">
+                        <%= t.nav_subjects %>
+                    </a>
+                    <a href="/reports">
+                        <%= t.nav_reports %>
+                    </a>
+                    <a href="/users">
+                        <%= t.nav_users %>
+                    </a>
+                    <% } else if (isSecretary) { %>
+                        <a href="/secretary">
+                            <%= t.nav_dashboard %>
+                        </a>
+                        <a href="/students">
+                            <%= t.nav_students %>
+                        </a>
+                        <a href="/payments/search">
+                            <%= t.nav_payments %>
+                        </a>
+                        <% } else if (isTeacher) { %>
+                            <a href="/teacher">
+                                <%= t.nav_dashboard %>
+                            </a>
+                            <a href="/students">
+                                <%= t.nav_students %>
+                            </a>
+                            <% } %>
+
+                                <!-- Extra teacher link for dual-role users -->
+                                <% if ((isAdmin || isSecretary) && isTeacher) { %>
+                                    <a href="/teacher">📖 <%= lang==='fr' ? 'Espace Enseignant' : 'Teacher Area' %></a>
+                                    <% } %>
+
+                                        <!-- Language switcher -->
+                                        <div class="lang-switch">
+                                            <a href="/lang/en"
+                                                class="lang-btn-nav <%= lang === 'en' ? 'lang-active' : '' %>">EN</a>
+                                            <a href="/lang/fr"
+                                                class="lang-btn-nav <%= lang === 'fr' ? 'lang-active' : '' %>">FR</a>
+                                        </div>
+
+                                        <!-- User info -->
+                                        <div class="nav-user">
+                                            <div class="nav-user-text">
+                                                <span class="nav-user-name">
+                                                    <%= user.name %>
+                                                </span>
+                                                <span class="nav-user-role">
+                                                    <%= user.role %>
+                                                        <% if (user.secondary_role) { %> · <%= user.secondary_role %>
+                                                                <% } %>
+                                                </span>
+                                            </div>
+                                            <div class="nav-avatar">
+                                                <%= user.name.charAt(0).toUpperCase() %>
+                                            </div>
+                                            <a href="/auth/logout" class="btn-secondary btn-sm">
+                                                <%= t.logout %>
+                                            </a>
+                                        </div>
+        </div>
+    </nav>
+
+    <div class="app-container">
+
+        <!-- Session Timeout Warning Modal -->
+        <% if (typeof showSessionWarning !== 'undefined' && showSessionWarning) { %>
+        <div id="sessionWarningModal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;">
+            <div style="background:white;padding:2rem;border-radius:12px;max-width:400px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom:1rem;color:#ef4444;">⏰ Session Timeout Warning</h3>
+                <p style="margin-bottom:1.5rem;color:#6b7280;">Your session will expire in <strong id="timeRemaining">5 minutes</strong> due to inactivity.</p>
+                <div style="display:flex;gap:0.75rem;">
+                    <button onclick="window.location.href='/auth/logout'" style="flex:1;padding:0.75rem;background:#ef4444;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Logout Now</button>
+                    <button onclick="extendSession()" style="flex:1;padding:0.75rem;background:#4f46e5;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Stay Logged In</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Session timeout warning
+            const sessionTimeoutMs = <% if (typeof sessionTimeoutMs !== 'undefined') { %><%= sessionTimeoutMs %><% } else { %>0<% } %>;
+            
+            if (sessionTimeoutMs > 0 && sessionTimeoutMs < 600000) {
+                let remainingMs = sessionTimeoutMs;
+                
+                const updateTimer = setInterval(() => {
+                    remainingMs -= 1000;
+                    const seconds = Math.floor(remainingMs / 1000);
+                    const minutes = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    
+                    const timeEl = document.getElementById('timeRemaining');
+                    if (timeEl) {
+                        if (minutes > 0) {
+                            timeEl.textContent = minutes + ' minute' + (minutes > 1 ? 's' : '');
+                        } else {
+                            timeEl.textContent = secs + ' second' + (secs > 1 ? 's' : '');
+                        }
+                    }
+                    
+                    if (remainingMs <= 0) {
+                        clearInterval(updateTimer);
+                        window.location.href = '/login?timeout=true';
+                    }
+                }, 1000);
+            }
+            
+            function extendSession() {
+                // Make a request to refresh the session
+                fetch('/auth/refresh-session', { method: 'POST' })
+                    .then(res => {
+                        if (res.ok) {
+                            location.reload();
+                        }
+                    })
+                    .catch(err => console.error('Error extending session:', err));
+            }
+        </script>
+        <% } %>
+
+        <script>
+            const hamburger = document.getElementById('hamburger');
+            const navLinks = document.getElementById('navLinks');
+            hamburger.addEventListener('click', () => {
+                const open = navLinks.classList.toggle('nav-open');
+                hamburger.classList.toggle('open', open);
+                hamburger.setAttribute('aria-expanded', open);
+            });
+            // Close menu when any nav link is clicked
+            navLinks.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('nav-open');
+                    hamburger.classList.remove('open');
+                    hamburger.setAttribute('aria-expanded', false);
+                });
+            });
+        </script>

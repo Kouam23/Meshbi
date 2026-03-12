@@ -18,7 +18,7 @@ async function createDatabase() {
         console.log('✅ Connected to PostgreSQL server\n');
         
         // Create the database
-        const dbName = process.env.DB_NAME || 'meshbi_school';
+        const dbName = process.env.DB_NAME || 'meshbi_school_rdlm';
         console.log(`📌 Creating database: ${dbName}`);
         
         try {

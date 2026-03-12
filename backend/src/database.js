@@ -6,7 +6,7 @@ const pool = new Pool({
     password: process.env.DB_PASSWORD || 'meshbi_password',
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 5432,
-    database: process.env.DB_NAME || 'meshbi_school',
+    database: process.env.DB_NAME || 'meshbi_school_rdlm',
     // Enable SSL for remote connections (Render), disable for localhost
     ssl: process.env.DB_HOST && process.env.DB_HOST !== 'localhost' ? { rejectUnauthorized: false } : false
 });

@@ -355,6 +355,18 @@
 
 /* ── Mobile (≤ 768px) ─────────────────────────────────── */
 @media (max-width: 768px) {
+    /* Responsive grid helpers collapse on tablet */
+    .responsive-grid-2col {
+        grid-template-columns: 1fr !important;
+    }
+
+    .responsive-grid-3col {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .responsive-grid-4col {
+        grid-template-columns: 1fr 1fr !important;
+    }
 
     /* Navbar becomes a slide-down drawer */
     .navbar {
@@ -628,6 +640,12 @@
 
 /* ── Small Mobile (≤ 480px) ───────────────────────────── */
 @media (max-width: 480px) {
+    /* All responsive grids to single column on very small screens */
+    .responsive-grid-2col,
+    .responsive-grid-3col,
+    .responsive-grid-4col {
+        grid-template-columns: 1fr !important;
+    }
     .navbar {
         padding: 0.75rem;
     }
@@ -678,6 +696,53 @@
     p[style*="font-size: 2rem"] {
         font-size: 1.5rem !important;
     }
+
+    /* Ensure buttons are touchable and readable on mobile */
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    button {
+        min-height: 44px;
+        min-width: 44px;
+        word-break: break-word;
+        white-space: normal;
+    }
+
+    /* Full width buttons in page header actions */
+    .page-header-actions .btn-primary,
+    .page-header-actions .btn-secondary {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Ensure form groups stack properly */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    /* Table responsiveness on very small screens */
+    .table-wrapper::after {
+        content: "← Scroll to see more →";
+        font-size: 0.7rem;
+    }
+
+/* ─── Responsive Grid Classes ──────────────────────────── */
+.responsive-grid-2col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+}
+
+.responsive-grid-3col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 1rem !important;
+}
+
+.responsive-grid-4col {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr 1fr !important;
+    gap: 1rem !important;
 }
 
 @keyframes slideDown {

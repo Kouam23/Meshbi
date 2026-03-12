@@ -34,7 +34,7 @@
         </div>
 
         <div class="glass-card" style="margin-bottom: 2rem;">
-            <form action="/teacher/subject/<%= subject.id %>" method="GET" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <form action="/teacher/subject/<%= subject.id %>" method="GET" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;" class="responsive-grid-2col">
                 <div class="form-group" style="margin-bottom:0;">
                     <label>Semester</label>
                     <select name="semester" onchange="this.form.submit()">

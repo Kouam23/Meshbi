@@ -115,23 +115,24 @@
                     <%= t.student_no_payments %>
                 </p>
                 <% } else { %>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <%= t.payments_col_date %>
-                                </th>
-                                <th>
-                                    <%= t.payments_col_type %>
-                                </th>
-                                <th>
-                                    <%= t.payments_col_amount %>
-                                </th>
-                                <th>
-                                    <%= t.payments_col_comment %>
-                                </th>
-                            </tr>
-                        </thead>
+                    <div class=\"table-wrapper\">
+                        <table class=\"data-table\">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <%= t.payments_col_date %>
+                                    </th>
+                                    <th>
+                                        <%= t.payments_col_type %>
+                                    </th>
+                                    <th>
+                                        <%= t.payments_col_amount %>
+                                    </th>
+                                    <th>
+                                        <%= t.payments_col_comment %>
+                                    </th>
+                                </tr>
+                            </thead>
                         <tbody>
                             <% payments.forEach(p=> { %>
                                 <tr>
@@ -152,7 +153,8 @@
                                 </tr>
                                 <% }) %>
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                     <% } %>
         </div>
     </div>
